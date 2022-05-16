@@ -2,15 +2,23 @@
 
 namespace App\Delivery;
 
-class DeliveryClass extends DeliveryAbstract
+class DeliveryClass
 {
     private $deliverys;
     private $deliveryName;
+    private $orders;
 
     public function __construct()
     {
         $this->deliverys = [];
         $this->deliveryName = "";
+        $this->orders = [];
+    }
+
+    public function setOrders($orders)
+    {
+        $this->orders = $orders;
+        return $this;
     }
 
     /**
@@ -49,7 +57,9 @@ class DeliveryClass extends DeliveryAbstract
             //Вызываем ошибку
             return ["error" => "NONE"];
         }
-        return ($this->deliverys[$this->deliveryName])->calculate();
+        return [
+            $this->deliveryName => $this->deliverys[$this->deliveryName]->calculate($this->orders)
+        ];
     }
 
     /**
@@ -61,7 +71,7 @@ class DeliveryClass extends DeliveryAbstract
     {
         $ret = [];
         foreach ($this->deliverys as $deliveryName => $delivery) {
-            $ret[$deliveryName] = $delivery->calculate();
+            $ret[$deliveryName] = $delivery->calculate($this->orders);
         }
 
         return $ret;

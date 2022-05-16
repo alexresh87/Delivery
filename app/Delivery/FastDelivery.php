@@ -10,28 +10,35 @@ class FastDelivery extends DeliveryAbstract
      *
      * @return void
      */
-    public function calculate()
+    public function calculate($orders)
     {
         //Получаем данные от сервера ТК
-        $data = $this->exec();
+        $data = $this->exec($orders);
 
         $current_hour = date("H");
+        $ret_data = [];
 
-        if ($data['status'] == "error") {
-            return $data;
+        foreach($data as $k => $item){
+
+            //Если по одной из перевозок была ошибка
+            if($item['status'] == "error"){
+                $ret_data[$k] = $item;
+                $ret_data[$k] += $orders[$k];
+                continue;
+            }
+
+            //Если сейчас уже больше 18 часов, то срок доставки увеличиваем на 1 день
+            if ($current_hour > 18) {
+                $data[$k]['period']++;
+            }
+
+            $ret_data[$k] = [
+                'status' => "success",
+                'price' => $data[$k]['price'],
+                'date' => date('Y-m-d', strtotime("+" . $data[$k]['period'] . " days", time()))
+            ];
+            $ret_data[$k] += $orders[$k];
         }
-
-        //Если сейчас уже больше 18 часов, то срок доставки увеличиваем на 1 день
-        if ($current_hour > 18) {
-            $data['period']++;
-        }
-
-        //Формируем результирующий массив
-        $ret_data = [
-            'status' => "success",
-            'price' => $data['price'],
-            'date' => date('Y-m-d', strtotime("+" . $data['period'] . " days", time()))
-        ];
 
         return $ret_data;
     }
@@ -41,34 +48,27 @@ class FastDelivery extends DeliveryAbstract
      *
      * @return array
      */
-    public function exec(): array
+    public function exec($orders): array
     {
-        //Подготавливаем данные для отправки на удаленный сервер
-        $data = [
-            'sourceKladr' => $this->getSource(),
-            'targetKladr' => $this->getTarget(),
-            'weight ' => $this->getWeight()
-        ];
-
         //Отправляем данные на сервер ТК и получаем ответ
-        $response = [
-            'error' => "",
-            'price' => rand(100, 1000),
-            'period' => rand(1, 10)
-        ];
-
-        //Если вернулась ошибка
-        if ($response['error']) {
-            return [
-                'status' => "error",
-                'error_msg' => $response['error_msg']
-            ];
+        //Эмуляция ответа, задаем произвольные данные
+        foreach($orders as $key => $item){
+            //Эмулируем ошибку
+            if(rand(1,4) == 3){
+                $response[$key] = [
+                    'status' => "error",
+                    'error_msg' => "не найден город получателя",
+                ];
+            }else{
+                $response[$key] = [
+                    'status' => "success",
+                    'price' => rand(100, 1000),
+                    'period' => rand(1, 10)    
+                ];
+            }
+            
         }
 
-        return [
-            'status' => "success",
-            'price' => $response['price'],
-            'period' => $response['period']
-        ];
+        return $response;
     }
 }

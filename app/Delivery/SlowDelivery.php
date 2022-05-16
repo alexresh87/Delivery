@@ -11,21 +11,28 @@ class SlowDelivery extends DeliveryAbstract
      *
      * @return void
      */
-    public function calculate()
+    public function calculate($orders)
     {
         //Получаем данные от сервера ТК
-        $data = $this->exec();
+        $data = $this->exec($orders);
+        $ret_data = [];
 
-        if ($data['status'] == "error") {
-            return $data;
+        foreach ($data as $k => $item) {
+
+            //Если по одной из перевозок была ошибка
+            if ($item['status'] == "error") {
+                $ret_data[$k] = $item;
+                $ret_data[$k] += $orders[$k];
+                continue;
+            }
+
+            $ret_data[$k] = [
+                'status' => "success",
+                'price' => ($this->base_cost * $data[$k]['coefficient']),
+                'date' => $data[$k]['date']
+            ];
+            $ret_data[$k] += $orders[$k];
         }
-
-        //Формируем результирующий массив
-        $ret_data = [
-            'status' => "success",
-            'price' => ($this->base_cost * $data['coefficient']),
-            'date' => $data['date']
-        ];
 
         return $ret_data;
     }
@@ -33,36 +40,29 @@ class SlowDelivery extends DeliveryAbstract
     /**
      * exec
      *
+     * @param  mixed $orders
      * @return array
      */
-    public function exec(): array
+    public function exec($orders): array
     {
-        //Подготавливаем данные для отправки на удаленный сервер
-        $data = [
-            'sourceKladr' => $this->getSource(),
-            'targetKladr' => $this->getTarget(),
-            'weight ' => $this->getWeight()
-        ];
-
         //Отправляем данные на сервер ТК и получаем ответ
-        $response = [
-            'error' => "",
-            'coefficient' => rand(1, 10),
-            'date' => date('Y-m-d', strtotime("+" . rand(1, 10) . " days", time())),
-        ];
-
-        //Если вернулась ошибка
-        if ($response['error']) {
-            return [
-                'status' => "error",
-                'error_msg' => $response['error_msg']
-            ];
+        //Эмуляция ответа, задаем произвольные данные
+        foreach ($orders as $key => $item) {
+            //Эмулируем ошибку
+            if (rand(1, 4) == 3) {
+                $response[$key] = [
+                    'status' => "error",
+                    'error_msg' => "не найден город отправителя",
+                ];
+            } else {
+                $response[$key] = [
+                    'status' => "success",
+                    'coefficient' => rand(1, 10),
+                    'date' => date('Y-m-d', strtotime("+" . rand(1, 10) . " days", time()))
+                ];
+            }
         }
 
-        return [
-            'status' => "success",
-            'coefficient' => $response['coefficient'],
-            'date' => $response['date']
-        ];
+        return $response;
     }
 }
