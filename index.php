@@ -6,6 +6,9 @@ use App\Delivery\SlowDelivery;
 
 spl_autoload_register();
 
+/**
+ * Функйия для отображения результата рассчета
+ */
 function print_result($result){
     foreach ($result as $name => $delivery) {
         print "Транспортная компания $name:" . PHP_EOL. PHP_EOL;
@@ -29,12 +32,8 @@ function print_result($result){
     }
 }
 
-$deliveryClass = new DeliveryClass;
 
-$deliveryClass
-    ->addDelivery(new FastDelivery, "FastDelivery")
-    ->addDelivery(new SlowDelivery, "SlowDelivery");
-
+//Массив данных для 1 заказа
 $orders_one = [
     [
         'sourceKladr' => "source_one_1",
@@ -42,6 +41,8 @@ $orders_one = [
         'weight' => 2.6
     ]
 ];
+
+//Массив данных для нескольких заказов
 $orders_many = [
     [
         'sourceKladr' => "source1",
@@ -54,6 +55,12 @@ $orders_many = [
         'weight' => 43.3
     ]
 ];
+
+$deliveryClass = new DeliveryClass;
+
+$deliveryClass
+    ->addDelivery(new FastDelivery, "FastDelivery")
+    ->addDelivery(new SlowDelivery, "SlowDelivery");
 
 print "Рассчет доставки для 1 компании" . PHP_EOL. PHP_EOL;
 $result = $deliveryClass
